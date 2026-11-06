@@ -1,0 +1,20 @@
+bin/
+obj/
+.vs/
+*.db
+*.db-shm
+*.db-wal
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.*.Development.json
+
+# IDE, test, and temporary output
+.vscode/
+TestResults/
+*.user
+*.suo
+*.log
