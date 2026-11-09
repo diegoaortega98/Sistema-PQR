@@ -1,6 +1,4 @@
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -11,108 +9,54 @@ public sealed class GoogleSheetService(
     ILogger<GoogleSheetService> logger,
     IConfiguration configuration)
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = null
-    };
-
     public async Task EnviarRespaldoAsync(
-        long idTicket,
+        string nombre,
         string documento,
-        string nombreEstudiante,
         string categoria,
-        string descripcion,
-        string estado)
+        string descripcion)
     {
-        var webhookUrl = GetWebhookUrl();
-        if (webhookUrl is null)
+        var formUrl = configuration["GoogleFormSettings:FormUrl"];
+        if (string.IsNullOrWhiteSpace(formUrl))
         {
+            logger.LogWarning("Google Forms no está configurado; se omite el respaldo del ticket.");
             return;
         }
 
-        var datos = new TicketBackupPayload(
-            idTicket,
-            documento,
-            nombreEstudiante,
-            categoria,
-            descripcion,
-            estado);
-
-        try
+        var formData = new Dictionary<string, string>
         {
-            using var response = await httpClient.PostAsJsonAsync(webhookUrl, datos, JsonOptions);
-            if (!response.IsSuccessStatusCode)
-            {
-                logger.LogWarning(
-                    "El respaldo del ticket {IdTicket} en Google Sheets devolvió HTTP {StatusCode}.",
-                    idTicket,
-                    (int)response.StatusCode);
-                Console.Error.WriteLine(
-                    $"El respaldo del ticket {idTicket} en Google Sheets devolvió HTTP {(int)response.StatusCode} ({response.ReasonPhrase}).");
-            }
-        }
-        catch (Exception exception)
-        {
-            logger.LogError(exception, "No se pudo respaldar el ticket {IdTicket} en Google Sheets; se conserva en PostgreSQL.", idTicket);
-            Console.Error.WriteLine(
-                $"No se pudo respaldar el ticket {idTicket} en Google Sheets; se conserva en PostgreSQL: {exception}");
-        }
-    }
-
-    public async Task ActualizarRespaldoAsync(long idTicket, string estado, string respuesta)
-    {
-        var webhookUrl = GetWebhookUrl();
-        if (webhookUrl is null)
-        {
-            return;
-        }
-
-        var datos = new
-        {
-            Accion = "Actualizar",
-            IdTicket = idTicket,
-            Estado = estado,
-            Respuesta = respuesta
+            ["entry.323429411"] = categoria,
+            ["entry.1533825319"] = "Estudiante",
+            ["entry.1918136615"] = "Fundación Elyon Yireh - Cartagena",
+            ["entry.289807416"] = nombre,
+            ["entry.411497220"] = documento,
+            ["entry.1459353141"] = "3000000000",
+            ["entry.1931416965"] = "correo@elyonyireh.edu.co",
+            ["entry.510921678"] = DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            ["entry.879910079"] = "1",
+            ["entry.1299815972"] = "Automovilismo",
+            ["entry.563078625"] = "Coordinación",
+            ["entry.1081510727"] = "N/A",
+            ["entry.95054066"] = descripcion
         };
 
         try
         {
-            using var response = await httpClient.PostAsJsonAsync(webhookUrl, datos, JsonOptions);
+            using var content = new FormUrlEncodedContent(formData);
+            using var response = await httpClient.PostAsync(formUrl, content);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning(
-                    "La actualización del ticket {IdTicket} en Google Sheets devolvió HTTP {StatusCode}.",
-                    idTicket,
+                logger.LogError(
+                    "El envío a Google Forms devolvió HTTP {StatusCode}.",
                     (int)response.StatusCode);
-                Console.Error.WriteLine(
-                    $"La actualización del ticket {idTicket} en Google Sheets devolvió HTTP {(int)response.StatusCode} ({response.ReasonPhrase}).");
             }
         }
-        catch (Exception exception)
+        catch (HttpRequestException exception)
         {
-            logger.LogError(exception, "No se pudo actualizar el ticket {IdTicket} en Google Sheets.", idTicket);
-            Console.Error.WriteLine(
-                $"No se pudo actualizar el ticket {idTicket} en Google Sheets: {exception}");
+            logger.LogError(exception, "Error de red al enviar el ticket a Google Forms.");
+        }
+        catch (TaskCanceledException exception)
+        {
+            logger.LogError(exception, "Se agotó el tiempo de espera al enviar el ticket a Google Forms.");
         }
     }
-
-    private string? GetWebhookUrl()
-    {
-        var webhookUrl = configuration["GoogleSheets:WebhookUrl"];
-        if (!string.IsNullOrWhiteSpace(webhookUrl))
-        {
-            return webhookUrl;
-        }
-
-        logger.LogWarning("Google Sheets no está configurado; se omite el respaldo del ticket.");
-        return null;
-    }
-
-    private sealed record TicketBackupPayload(
-        [property: JsonPropertyName("IdTicket")] long IdTicket,
-        [property: JsonPropertyName("Documento")] string Documento,
-        [property: JsonPropertyName("Nombre")] string Nombre,
-        [property: JsonPropertyName("Categoria")] string Categoria,
-        [property: JsonPropertyName("Descripcion")] string Descripcion,
-        [property: JsonPropertyName("Estado")] string Estado);
 }

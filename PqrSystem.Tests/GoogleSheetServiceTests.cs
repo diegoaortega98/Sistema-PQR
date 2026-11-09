@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using PqrSystem.Api.Services;
@@ -8,43 +7,48 @@ namespace PqrSystem.Tests;
 
 public sealed class GoogleSheetServiceTests
 {
-    private const string WebhookUrl = "https://webhook.example.test/exec";
+    private const string FormUrl =
+        "https://docs.google.com/forms/d/e/1FAIpQLSd1uPDKOe7vFLVf3k7r3GP8M2eES5dpKVrlwqfFpHkLMUjd6w/formResponse";
 
     [Fact]
-    public async Task EnviarRespaldoAsync_EnviaUrlYPropiedadesExactas()
+    public async Task EnviarRespaldoAsync_EnviaLosTreceCamposDelFormulario()
     {
         HttpRequestMessage? sentRequest = null;
-        using var httpClient = new HttpClient(new StubHttpMessageHandler((request, _) =>
+        string? sentBody = null;
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(async (request, _) =>
         {
             sentRequest = request;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            sentBody = await request.Content!.ReadAsStringAsync();
+            return new HttpResponseMessage(HttpStatusCode.OK);
         }));
         var service = CreateService(httpClient);
 
         await service.EnviarRespaldoAsync(
-            17,
-            "DOC-017",
             "ESTUDIANTE DE PRUEBA",
+            "DOC-017",
             "Sugerencia",
-            "Detalle",
-            "Pendiente");
+            "Detalle de prueba");
 
         Assert.NotNull(sentRequest);
         Assert.Equal(HttpMethod.Post, sentRequest.Method);
-        Assert.Equal(WebhookUrl, sentRequest.RequestUri!.ToString());
+        Assert.Equal(FormUrl, sentRequest.RequestUri!.ToString());
+        Assert.Equal("application/x-www-form-urlencoded", sentRequest.Content!.Headers.ContentType!.MediaType);
 
-        using var json = JsonDocument.Parse(await sentRequest.Content!.ReadAsStringAsync());
-        Assert.Equal(
-            ["IdTicket", "Documento", "Nombre", "Categoria", "Descripcion", "Estado"],
-            json.RootElement.EnumerateObject().Select(property => property.Name).ToArray());
-        Assert.Equal(17, json.RootElement.GetProperty("IdTicket").GetInt64());
-        Assert.Equal("DOC-017", json.RootElement.GetProperty("Documento").GetString());
-        Assert.Equal("ESTUDIANTE DE PRUEBA", json.RootElement.GetProperty("Nombre").GetString());
-        Assert.Equal("Sugerencia", json.RootElement.GetProperty("Categoria").GetString());
-        Assert.Equal("Detalle", json.RootElement.GetProperty("Descripcion").GetString());
-        Assert.Equal("Pendiente", json.RootElement.GetProperty("Estado").GetString());
-
-        sentRequest.Dispose();
+        var fields = ParseForm(sentBody!);
+        Assert.Equal(13, fields.Count);
+        Assert.Equal("Sugerencia", fields["entry.323429411"]);
+        Assert.Equal("Estudiante", fields["entry.1533825319"]);
+        Assert.Equal("Fundación Elyon Yireh - Cartagena", fields["entry.1918136615"]);
+        Assert.Equal("ESTUDIANTE DE PRUEBA", fields["entry.289807416"]);
+        Assert.Equal("DOC-017", fields["entry.411497220"]);
+        Assert.Equal("3000000000", fields["entry.1459353141"]);
+        Assert.Equal("correo@elyonyireh.edu.co", fields["entry.1931416965"]);
+        Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", fields["entry.510921678"]);
+        Assert.Equal("1", fields["entry.879910079"]);
+        Assert.Equal("Automovilismo", fields["entry.1299815972"]);
+        Assert.Equal("Coordinación", fields["entry.563078625"]);
+        Assert.Equal("N/A", fields["entry.1081510727"]);
+        Assert.Equal("Detalle de prueba", fields["entry.95054066"]);
     }
 
     [Fact]
@@ -55,57 +59,25 @@ public sealed class GoogleSheetServiceTests
         var service = CreateService(httpClient);
 
         var exception = await Record.ExceptionAsync(
-            () => service.EnviarRespaldoAsync(
-                18,
-                "DOC-018",
-                "ESTUDIANTE DE PRUEBA",
-                "Otro",
-                "Detalle",
-                "Pendiente"));
+            () => service.EnviarRespaldoAsync("Nombre", "DOC-018", "Otro", "Detalle"));
 
         Assert.Null(exception);
     }
 
     [Fact]
-    public async Task ActualizarRespaldoAsync_EnviaUrlYPropiedadesExactas()
+    public async Task EnviarRespaldoAsync_SinUrlConfigurada_NoEnviaSolicitud()
     {
-        HttpRequestMessage? sentRequest = null;
-        using var httpClient = new HttpClient(new StubHttpMessageHandler((request, _) =>
+        var requestSent = false;
+        using var httpClient = new HttpClient(new StubHttpMessageHandler((_, _) =>
         {
-            sentRequest = request;
+            requestSent = true;
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
         }));
-        var service = CreateService(httpClient);
+        var service = CreateService(httpClient, includeFormUrl: false);
 
-        await service.ActualizarRespaldoAsync(27, "Resuelto", "Solicitud atendida");
+        await service.EnviarRespaldoAsync("Nombre", "DOC-019", "Otro", "Detalle");
 
-        Assert.NotNull(sentRequest);
-        Assert.Equal(HttpMethod.Post, sentRequest.Method);
-        Assert.Equal(WebhookUrl, sentRequest.RequestUri!.ToString());
-
-        using var json = JsonDocument.Parse(await sentRequest.Content!.ReadAsStringAsync());
-        Assert.Equal(
-            ["Accion", "IdTicket", "Estado", "Respuesta"],
-            json.RootElement.EnumerateObject().Select(property => property.Name).ToArray());
-        Assert.Equal("Actualizar", json.RootElement.GetProperty("Accion").GetString());
-        Assert.Equal(27, json.RootElement.GetProperty("IdTicket").GetInt64());
-        Assert.Equal("Resuelto", json.RootElement.GetProperty("Estado").GetString());
-        Assert.Equal("Solicitud atendida", json.RootElement.GetProperty("Respuesta").GetString());
-
-        sentRequest.Dispose();
-    }
-
-    [Fact]
-    public async Task ActualizarRespaldoAsync_CuandoHttpClientFalla_NoPropagaExcepcion()
-    {
-        using var httpClient = new HttpClient(new StubHttpMessageHandler(
-            (_, _) => throw new HttpRequestException("Fallo de prueba")));
-        var service = CreateService(httpClient);
-
-        var exception = await Record.ExceptionAsync(
-            () => service.ActualizarRespaldoAsync(28, "Resuelto", "Respuesta"));
-
-        Assert.Null(exception);
+        Assert.False(requestSent);
     }
 
     private sealed class StubHttpMessageHandler(
@@ -118,13 +90,23 @@ public sealed class GoogleSheetServiceTests
             send(request, cancellationToken);
     }
 
-    private static GoogleSheetService CreateService(HttpClient httpClient)
+    private static Dictionary<string, string> ParseForm(string content) =>
+        content.Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Select(pair => pair.Split('=', 2))
+            .ToDictionary(
+                pair => Uri.UnescapeDataString(pair[0].Replace('+', ' ')),
+                pair => Uri.UnescapeDataString(pair[1].Replace('+', ' ')));
+
+    private static GoogleSheetService CreateService(HttpClient httpClient, bool includeFormUrl = true)
     {
+        var values = new Dictionary<string, string?>();
+        if (includeFormUrl)
+        {
+            values["GoogleFormSettings:FormUrl"] = FormUrl;
+        }
+
         var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["GoogleSheets:WebhookUrl"] = WebhookUrl
-            })
+            .AddInMemoryCollection(values)
             .Build();
 
         return new GoogleSheetService(

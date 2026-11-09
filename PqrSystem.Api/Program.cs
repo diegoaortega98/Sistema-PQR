@@ -45,14 +45,11 @@ app.MapPost("/api/tickets", async (
             request.NombreEstudiante,
             request.Categoria,
             request.Descripcion);
-        Console.WriteLine($"ENVIANDO A GOOGLE SHEETS EL TICKET ID: {ticket.Id}");
         await googleSheetService.EnviarRespaldoAsync(
-            ticket.Id,
-            ticket.DocumentoEstudiante,
             ticket.NombreEstudiante,
+            ticket.DocumentoEstudiante,
             ticket.Categoria,
-            ticket.Descripcion,
-            ticket.Estado);
+            ticket.Descripcion);
         return Results.Created(
             $"/api/tickets/{ticket.Id}",
             new CrearTicketResponse(
@@ -97,8 +94,7 @@ app.MapPut("/api/tickets/{id:int}/respuesta", async (
     HttpRequest httpRequest,
     int id,
     ResponderTicketRequest request,
-    TicketService service,
-    GoogleSheetService googleSheetService) =>
+    TicketService service) =>
 {
     if (!HasValidAdminPassword(httpRequest, adminPassword))
     {
@@ -108,7 +104,6 @@ app.MapPut("/api/tickets/{id:int}/respuesta", async (
     try
     {
         var documentoEstudiante = await service.ResponderTicketAsync(id, request.Respuesta);
-        await googleSheetService.ActualizarRespaldoAsync(id, "Resuelto", request.Respuesta.Trim());
         return Results.Ok(new ResponderTicketResponse(documentoEstudiante));
     }
     catch (PqrValidationException exception)
