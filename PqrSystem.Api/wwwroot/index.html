@@ -267,9 +267,10 @@
 
         .status:empty { display: none; }
         .status-success { color: var(--green); }
-        .status-error { color: #922b27; }
+        .status-error { color: #B42318; }
         .status-info { color: var(--muted); }
         .response-resolved { color: var(--green); font-weight: 600; }
+        #student-tickets-results table { min-width: 520px; }
 
         .table-wrap {
             overflow-x: auto;
@@ -404,11 +405,9 @@
                 <table>
                     <thead>
                         <tr>
-                            <th scope="col">Id</th>
-                            <th scope="col">Tipo de solicitud</th>
-                            <th scope="col">Descripción</th>
+                            <th scope="col">Fecha</th>
                             <th scope="col">Estado</th>
-                            <th scope="col">Respuesta</th>
+                            <th scope="col">Descripción</th>
                         </tr>
                     </thead>
                     <tbody id="student-tickets-body"></tbody>
@@ -499,23 +498,24 @@
 
         function createStudentTicketRow(ticket) {
             const row = document.createElement("tr");
-            const values = [
-                ticket.id,
-                ticket.categoria,
-                ticket.descripcion,
-                ticket.estado,
-                ticket.respuestaAdmin || "Pendiente de respuesta"
-            ];
-
-            for (const [index, value] of values.entries()) {
+            for (const value of [ticket.fecha, ticket.estado, ticket.descripcion]) {
                 const cell = document.createElement("td");
                 cell.textContent = String(value ?? "");
-                if (index === 4 && ticket.estado === "Resuelto" && ticket.respuestaAdmin) {
-                    cell.className = "response-resolved";
-                }
                 row.append(cell);
             }
             return row;
+        }
+
+        function formatSituationDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value ?? "");
+
+            return new Intl.DateTimeFormat("es-CO", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                timeZone: "UTC"
+            }).format(date);
         }
 
         function createTicketRow(ticket) {
@@ -620,24 +620,44 @@
             studentTicketsResults.hidden = true;
             setStatus(studentSearchStatus, "Buscando tus solicitudes…", "info");
             try {
+                const appsScriptUrl = "https://script.google.com/macros/s/AKfycbynoVUrf2SKPW5fpiOrtOkqamV5L3gGsODF9RvqxAsQUgjo96MaYwr4dGOJkE49i0GZ/exec";
                 const response = await fetch(
-                    `/api/tickets/estudiante/${encodeURIComponent(documento)}`);
-                if (!response.ok) throw new Error(await readError(response));
+                    `${appsScriptUrl}?documento=${encodeURIComponent(documento)}`,
+                    { method: "GET" });
+                const result = await response.json();
 
-                const tickets = await response.json();
-                if (tickets.length === 0) {
-                    studentTicketsBody.replaceChildren();
-                    setStatus(studentSearchStatus, "No se encontraron solicitudes para este documento.", "info");
+                if (result.error) {
+                    setStatus(studentSearchStatus, result.error, "error");
                     return;
                 }
 
-                studentTicketsBody.replaceChildren(...tickets.map(createStudentTicketRow));
+                if (!response.ok) {
+                    throw new Error("No fue posible consultar la solicitud.");
+                }
+
+                if (!result.encontrado) {
+                    studentTicketsBody.replaceChildren();
+                    setStatus(
+                        studentSearchStatus,
+                        result.mensaje || "No se encontraron solicitudes para este documento.",
+                        "error");
+                    return;
+                }
+
+                const ticket = {
+                    fecha: formatSituationDate(result.fecha),
+                    estado: result.estado,
+                    descripcion: result.descripcion
+                };
+                studentTicketsBody.replaceChildren(createStudentTicketRow(ticket));
                 studentTicketsResults.hidden = false;
-                setStatus(studentSearchStatus, `Se encontraron ${tickets.length} solicitud(es).`, "success");
+                setStatus(studentSearchStatus, "Se encontró una solicitud.", "success");
             } catch (error) {
                 setStatus(
                     studentSearchStatus,
-                    error.message || "No fue posible consultar las solicitudes.",
+                    error instanceof TypeError
+                        ? "No fue posible conectar con el servicio de consulta. Inténtalo nuevamente."
+                        : error.message || "No fue posible conectar con el servicio de consulta. Inténtalo nuevamente.",
                     "error");
             } finally {
                 searchButton.disabled = false;
