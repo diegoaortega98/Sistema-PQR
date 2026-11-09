@@ -429,8 +429,13 @@
             try {
                 const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwPmAJPe2KjMcnhqUZbYXy5fWiwT4wueji5eTIwLyTg42aMy-UICSxIUtLYWYwRX1Ia/exec";
                 const response = await fetch(
-                    `${appsScriptUrl}?documento=${encodeURIComponent(documento)}`,
-                    { method: "GET" });
+                    `${appsScriptUrl}?documento=${encodeURIComponent(documento)}`);
+                const contentType = response.headers.get("content-type") || "";
+                if (!contentType.includes("application/json")) {
+                    throw new Error(
+                        "Google Apps Script no devolvió JSON. Verifica que la implementación incluya doGet y esté publicada.");
+                }
+
                 const result = await response.json();
 
                 if (result.error) {
@@ -460,6 +465,7 @@
                 studentTicketsResults.hidden = false;
                 setStatus(studentSearchStatus, "Se encontró una solicitud.", "success");
             } catch (error) {
+                console.log(error);
                 setStatus(
                     studentSearchStatus,
                     error instanceof TypeError
