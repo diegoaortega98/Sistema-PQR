@@ -620,7 +620,7 @@
             studentTicketsResults.hidden = true;
             setStatus(studentSearchStatus, "Buscando tus solicitudes…", "info");
             try {
-                const appsScriptUrl = "https://script.google.com/macros/s/AKfycbynoVUrf2SKPW5fpiOrtOkqamV5L3gGsODF9RvqxAsQUgjo96MaYwr4dGOJkE49i0GZ/exec";
+                const appsScriptUrl = "https://script.google.com/macros/s/AKfycbwPmAJPe2KjMcnhqUZbYXy5fWiwT4wueji5eTIwLyTg42aMy-UICSxIUtLYWYwRX1Ia/exec";
                 const response = await fetch(
                     `${appsScriptUrl}?documento=${encodeURIComponent(documento)}`,
                     { method: "GET" });
