@@ -3,17 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0d3b66">
+    <meta name="theme-color" content="#123B63">
     <title>Sistema PQRSF - CENTRO DE ENSEÑANZA AUTOMOVILISTICA ELYON YIREH S.A.S.</title>
     <style>
         :root {
             color-scheme: light;
             font-family: Arial, Helvetica, sans-serif;
-            color: #263445;
-            background: #f3f6f9;
-            --blue: #0d3b66;
-            --blue-hover: #082f52;
-            --border: #dce3ea;
+            color: #273746;
+            background: #F3F5F7;
+            --navy: #123B63;
+            --blue: #1769AA;
+            --green: #36A66A;
+            --border: #DCE2E8;
             --muted: #64748b;
         }
 
@@ -29,8 +30,8 @@
             position: relative;
             padding: 22px 20px;
             color: #fff;
-            background: var(--blue);
-            box-shadow: 0 3px 12px #16324a24;
+            background: var(--navy);
+            border-bottom: 3px solid var(--green);
         }
 
         .header-content, main {
@@ -49,31 +50,32 @@
         .header-logo {
             display: block;
             flex: 0 0 auto;
-            width: 180px;
-            height: 72px;
+            width: 164px;
+            height: 74px;
             object-fit: contain;
-            padding: 5px 9px;
-            border: 1px solid #d5d5d5;
-            border-radius: 5px;
+            padding: 4px;
+            border: 0;
+            border-radius: 0;
             background: #fff;
         }
 
         .header-content > div { min-width: 0; }
 
-        .eyebrow {
-            margin: 0 0 7px;
-            color: #d9e7f2;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-        }
-
         h1 {
             max-width: 760px;
             margin: 0;
-            font-size: clamp(18px, 2.2vw, 25px);
-            line-height: 1.3;
+            font-size: clamp(23px, 2.8vw, 30px);
+            letter-spacing: .045em;
+            line-height: 1.2;
+        }
+
+        .header-subtitle {
+            margin: 7px 0 0;
+            color: #e0e8ef;
+            font-size: clamp(12px, 1.4vw, 15px);
+            font-weight: 600;
+            letter-spacing: .035em;
+            line-height: 1.45;
         }
 
         .admin-access-button {
@@ -84,34 +86,34 @@
             border: 1px solid #ffffff80;
             border-radius: 5px;
             color: #fff;
-            background: transparent;
+            background: #ffffff0d;
             font: 600 13px Arial, Helvetica, sans-serif;
             cursor: pointer;
         }
 
-        .admin-access-button:hover { background: #ffffff18; }
+        .admin-access-button:hover { background: #ffffff1a; }
         .admin-access-button:disabled { cursor: wait; opacity: .7; }
 
         main {
             display: grid;
             gap: 22px;
-            padding-block: 36px 54px;
+            padding-block: 38px 48px;
         }
 
         .card {
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 9px;
             background: #fff;
-            box-shadow: 0 8px 26px #17324a0d;
+            box-shadow: 0 2px 10px #18344a0b;
         }
 
         .welcome-card {
             display: flex;
-            min-height: 330px;
+            min-height: 340px;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 42px 24px;
+            padding: 48px 24px;
             text-align: center;
         }
 
@@ -122,18 +124,21 @@
             place-items: center;
             margin-bottom: 18px;
             border-radius: 50%;
-            color: var(--blue);
-            background: #eaf2f8;
+            color: var(--navy);
+            background: #EDF3F8;
         }
 
         .welcome-icon svg { width: 34px; height: 34px; }
 
         h2 {
             margin: 0 0 10px;
-            color: #20364c;
+            color: var(--navy);
             font-size: clamp(21px, 3vw, 28px);
+            letter-spacing: .035em;
             line-height: 1.3;
         }
+
+        .welcome-card h2 { text-transform: uppercase; }
 
         .welcome-message {
             max-width: 650px;
@@ -152,25 +157,25 @@
             margin-top: 26px;
             padding: 14px 30px;
             border: 0;
-            border-radius: 7px;
+            border-radius: 5px;
             color: #fff;
-            background: var(--blue);
-            box-shadow: 0 5px 14px #0d3b6633;
-            font: 700 17px Arial, Helvetica, sans-serif;
+            background: var(--navy);
+            box-shadow: 0 2px 7px #123b6321;
+            font: 700 16px Arial, Helvetica, sans-serif;
+            letter-spacing: .05em;
             text-decoration: none;
-            transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+            transition: background-color .18s ease, box-shadow .18s ease;
         }
 
         .radicate-button:hover {
-            transform: translateY(-2px);
-            background: var(--blue-hover);
-            box-shadow: 0 8px 18px #0d3b6640;
+            background: #0D3152;
+            box-shadow: 0 4px 10px #123b6329;
         }
 
         .radicate-button:focus-visible,
         button:focus-visible,
         input:focus-visible {
-            outline: 3px solid #82b8e3;
+            outline: 3px solid #76A9D2;
             outline-offset: 3px;
         }
 
@@ -187,6 +192,8 @@
         .section-heading h2 {
             margin-bottom: 5px;
             font-size: 20px;
+            letter-spacing: .045em;
+            text-transform: uppercase;
         }
 
         .description {
@@ -209,6 +216,8 @@
             color: #334155;
             font-size: 14px;
             font-weight: 600;
+            letter-spacing: .025em;
+            text-transform: uppercase;
         }
 
         input {
@@ -217,7 +226,7 @@
             padding: 9px 11px;
             border: 1px solid #cbd5df;
             border-radius: 5px;
-            color: #263445;
+            color: #273746;
             background: #fff;
             font: 15px Arial, Helvetica, sans-serif;
         }
@@ -238,7 +247,7 @@
             cursor: pointer;
         }
 
-        .button:hover { background: var(--blue-hover); }
+        .button:hover { background: #12588F; }
         .button:disabled { cursor: wait; opacity: .68; }
 
         .button-secondary {
@@ -247,7 +256,7 @@
             background: #fff;
         }
 
-        .button-secondary:hover { background: #edf3f8; }
+        .button-secondary:hover { background: #EEF4F8; }
 
         .status {
             min-height: 20px;
@@ -257,10 +266,10 @@
         }
 
         .status:empty { display: none; }
-        .status-success { color: #28613a; }
+        .status-success { color: var(--green); }
         .status-error { color: #922b27; }
         .status-info { color: var(--muted); }
-        .response-resolved { color: #28613a; font-weight: 600; }
+        .response-resolved { color: var(--green); font-weight: 600; }
 
         .table-wrap {
             overflow-x: auto;
@@ -283,7 +292,7 @@
 
         th {
             color: #334155;
-            background: #f1f5f8;
+            background: #F3F5F7;
             font-size: 13px;
             font-weight: 600;
         }
@@ -302,13 +311,29 @@
         }
         [hidden] { display: none !important; }
 
+        .site-footer {
+            padding: 20px;
+            color: #e6edf3;
+            background: var(--navy);
+            text-align: center;
+        }
+
+        .site-footer p {
+            width: min(100% - 24px, 1060px);
+            margin: 0 auto;
+            font-size: 13px;
+            letter-spacing: .02em;
+            line-height: 1.55;
+        }
+
         @media (max-width: 640px) {
             .site-header { padding: 58px 14px 18px; }
             .header-content, main { width: min(100% - 28px, 1060px); }
             .admin-access-button { top: 10px; right: 14px; }
             .header-content { gap: 12px; padding-right: 0; }
-            .header-logo { width: 105px; height: 56px; padding: 4px; }
-            h1 { font-size: 16px; }
+            .header-logo { width: 100px; height: 58px; padding: 2px; }
+            h1 { font-size: 21px; }
+            .header-subtitle { font-size: 12px; }
             main { gap: 16px; padding-block: 22px 36px; }
             .welcome-card { min-height: 300px; padding: 32px 20px; }
             .radicate-button { width: 100%; max-width: 330px; }
@@ -325,8 +350,8 @@
         <div class="header-content">
             <img class="header-logo" src="logo.png" alt="Logo Elyon Yireh">
             <div>
-                <p class="eyebrow">Atención de peticiones, quejas, reclamos, sugerencias y felicitaciones</p>
-                <h1>Sistema PQRSF - CENTRO DE ENSEÑANZA AUTOMOVILISTICA ELYON YIREH S.A.S.</h1>
+                <h1>SISTEMA PQRSF</h1>
+                <p class="header-subtitle">CENTRO DE ENSEÑANZA AUTOMOVILÍSTICA ELYON YIREH S.A.S.</p>
             </div>
         </div>
         <button class="admin-access-button" id="admin-access-button" type="button">
@@ -343,15 +368,20 @@
                     <path d="M14 3.75v4h4M9 12h6M9 16h6"/>
                 </svg>
             </div>
-            <h2 id="welcome-title">Bienvenido al sistema PQRSF – Elyon Yireh</h2>
+            <h2 id="welcome-title">BIENVENIDO AL SISTEMA PQRSF</h2>
             <p class="welcome-message">
-                Bienvenido al sistema PQRSF – Elyon Yireh. Radica tu solicitud de forma rápida y segura.
+                Radica tu solicitud de forma rápida, sencilla y segura. Estamos comprometidos con brindarte una atención transparente y oportuna.
             </p>
             <a class="radicate-button"
                href="https://docs.google.com/forms/d/e/1FAIpQLSd1uPDKOe7vFLVf3k7r3GP8M2eES5dpKVrlwqfFpHkLMUjd6w/viewform"
                target="_blank" rel="noopener noreferrer">
-                <span aria-hidden="true">✦</span>
-                Radicar PQRSF
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+                     width="20" height="20">
+                    <path d="M7 3.75h7l4 4v12.5H7a2 2 0 0 1-2-2v-12.5a2 2 0 0 1 2-2Z"/>
+                    <path d="M14 3.75v4h4M9 12h6M9 16h6"/>
+                </svg>
+                RADICAR PQRSF
             </a>
             <p class="external-note">Se abrirá el formulario institucional en una nueva pestaña.</p>
         </section>
@@ -415,6 +445,10 @@
             <p class="status" id="admin-status" role="status" aria-live="polite"></p>
         </section>
     </main>
+
+    <footer class="site-footer">
+        <p>CENTRO DE ENSEÑANZA AUTOMOVILÍSTICA ELYON YIREH S.A.S. - Compromiso, Transparencia y Servicio</p>
+    </footer>
 
     <script>
         const adminAccessButton = document.getElementById("admin-access-button");
